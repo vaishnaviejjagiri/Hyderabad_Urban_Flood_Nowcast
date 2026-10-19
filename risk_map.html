@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Hyderabad Urban Flood Nowcast</title>
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: #0b3d62;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 14px;
+        }
+
+        #map {
+            width: 100%;
+            height: calc(100vh - 90px);
+        }
+
+        .info-box {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            line-height: 1.5;
+        }
+
+        .legend {
+            background: white;
+            padding: 10px;
+            line-height: 22px;
+            border-radius: 8px;
+        }
+
+        .legend span {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-right: 6px;
+            border-radius: 50%;
+        }
+
+        .blue {
+            background: #1976d2;
+        }
+
+        .green {
+            background: green;
+        }
+
+        .yellow {
+            background: #f1c40f;
+        }
+
+        .orange {
+            background: orange;
+        }
+
+        .red {
+            background: red;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+
+    <h1>Hyderabad Urban Flood Nowcast</h1>
+
+    <p>
+        Real Hyderabad Map + Official Waterlogging Locations
+    </p>
+
+</div>
+
+<div id="map"></div>
+
+
+<script>
+
+    // ----------------------------------------------------
+    // REAL HYDERABAD MAP
+    // ----------------------------------------------------
+
+    const map = L.map("map").setView(
+        [17.3850, 78.4867],
+        12
+    );
+
+
+    // OpenStreetMap real basemap
+    L.tileLayer(
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+            attribution:
+                '&copy; OpenStreetMap contributors'
+        }
+    ).addTo(map);
+
+
+    // ----------------------------------------------------
+    // HYDERABAD CENTER
+    // ----------------------------------------------------
+
+    const hyderabadMarker = L.marker(
+        [17.3850, 78.4867]
+    ).addTo(map);
+
+    hyderabadMarker.bindPopup(
+        "<b>Hyderabad</b><br>" +
+        "Flood Nowcast Monitoring Area"
+    );
+
+
+    // ----------------------------------------------------
+    // OFFICIAL TGRAC / GHMC WATERLOGGING LOCATIONS
+    // ----------------------------------------------------
+
+    const inundationLocations = [
+
+        {
+            name: "BALKAMPET RUB",
+            lat: 17.448776054,
+            lon: 78.451292867
+        },
+
+        {
+            name: "NEAR APOLLO CRADLE HOSPITAL, ROAD NO 12",
+            lat: 17.416016345,
+            lon: 78.419640219
+        },
+
+        {
+            name: "NEAR TAPADIA DIAGNOSTIC CENTRE, CHIKKADPALLY",
+            lat: 17.407571075,
+            lon: 78.497114264
+        },
+
+        {
+            name: "FIZA HOTEL, BAHADURPURA X ROADS",
+            lat: 17.355292236,
+            lon: 78.454231245
+        },
+
+        {
+            name: "OPP BEGUM BAZAR POLICE STATION",
+            lat: 17.379778402,
+            lon: 78.475203575
+        },
+
+        {
+            name: "RETHIBOWLI JUNCTION",
+            lat: 17.395533015,
+            lon: 78.431077834
+        },
+
+        {
+            name: "NEAR GALAXY THEATRE, TOLICHOWKI",
+            lat: 17.402771021,
+            lon: 78.410735308
+        },
+
+        {
+            name: "LAKDIKAPUL",
+            lat: 17.404140093,
+            lon: 78.464495499
+        },
+
+        {
+            name: "BOMBAY HOTEL, RANIGUNJ",
+            lat: 17.432478447,
+            lon: 78.488477682
+        },
+
+        {
+            name: "MODEL HOUSE, PUNJAGUTTA",
+            lat: 17.424452310,
+            lon: 78.453587046
+        },
+
+        {
+            name: "LAKE VIEW GUEST HOUSE",
+            lat: 17.416228709,
+            lon: 78.460813639
+        },
+
+        {
+            name: "VILLA MARY COLLEGE, RAJBHAVAN ROAD",
+            lat: 17.421284709,
+            lon: 78.460300971
+        },
+
+        {
+            name: "KCP JUNCTION, KHAIRATHABAD",
+            lat: 17.417478603,
+            lon: 78.457065810
+        },
+
+        {
+            name: "NEERU'S SHOWROOM ROAD NO 36, BANJARA HILLS",
+            lat: 17.438652933,
+            lon: 78.399523474
+        },
+
+        {
+            name: "MINERVA HOTEL, HIMAYATHNAGAR",
+            lat: 17.401406896,
+            lon: 78.485483906
+        },
+
+        {
+            name: "OLIPHANT BRIDGE, CHILKALGUDA X ROADS",
+            lat: 17.433646622,
+            lon: 78.505944563
+        },
+
+        {
+            name: "NAMPALLY T JUNCTION",
+            lat: 17.392302073,
+            lon: 78.470026799
+        },
+
+        {
+            name: "OPP MEDIVISION EYE HOSPITAL, NMDC",
+            lat: 17.399061938,
+            lon: 78.447947609
+        },
+
+        {
+            name: "MOGHAL ENGINEERING COLLEGE, BANDLAGUDA",
+            lat: 17.314368804,
+            lon: 78.459953201
+        },
+
+        {
+            name: "MALAKPET GUNJ",
+            lat: 17.373301287,
+            lon: 78.504616846
+        },
+
+        {
+            name: "MALAKPET RUB",
+            lat: 17.377045666,
+            lon: 78.495137873
+        },
+
+        {
+            name: "CHILKALGUDA RUB",
+            lat: 17.434696622,
+            lon: 78.512466816
+        },
+
+        {
+            name: "SHAIKPET NALA",
+            lat: 17.406721560,
+            lon: 78.402841165
+        }
+
+    ];
+
+
+    // ----------------------------------------------------
+    // ADD OFFICIAL LOCATIONS TO MAP
+    // ----------------------------------------------------
+
+    inundationLocations.forEach(function(location) {
+
+        const marker = L.circleMarker(
+            [location.lat, location.lon],
+            {
+                radius: 8,
+                color: "#8e0000",
+                fillColor: "#ff0000",
+                fillOpacity: 0.85,
+                weight: 2
+            }
+        ).addTo(map);
+
+        marker.bindPopup(
+            "<b>Official Waterlogging Location</b><br><br>" +
+            location.name +
+            "<br><br>" +
+            "Source: TGRAC / GHMC"
+        );
+
+    });
+
+
+    // ----------------------------------------------------
+    // INFORMATION BOX
+    // ----------------------------------------------------
+
+    const info = L.control({
+        position: "topright"
+    });
+
+    info.onAdd = function() {
+
+        const div = L.DomUtil.create(
+            "div",
+            "info-box"
+        );
+
+        div.innerHTML =
+            "<b>Current Flood Risk</b><br>" +
+            "Use Step 10 live rainfall result<br><br>" +
+            "<b>Official Locations:</b> 23<br>" +
+            "<b>Map:</b> Hyderabad";
+
+        return div;
+    };
+
+    info.addTo(map);
+
+
+    // ----------------------------------------------------
+    // LEGEND
+    // ----------------------------------------------------
+
+    const legend = L.control({
+        position: "bottomright"
+    });
+
+    legend.onAdd = function() {
+
+        const div = L.DomUtil.create(
+            "div",
+            "legend"
+        );
+
+        div.innerHTML =
+            "<b>Map Legend</b><br>" +
+            "<span class='red'></span>" +
+            "Official waterlogging location<br>" +
+            "<span class='blue'></span>" +
+            "Hyderabad monitoring point";
+
+        return div;
+    };
+
+    legend.addTo(map);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Hyderabad Urban Flood Nowcast</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #eef3f7;
+            color: #17212b;
+        }
+
+        .header {
+            background: #083b5c;
+            color: white;
+            padding: 20px 25px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 7px 0 0;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .status {
+            background: white;
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 13px;
+            color: #64717d;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .card-value {
+            font-size: 27px;
+            font-weight: bold;
+        }
+
+        .risk-card {
+            color: white;
+            background: #1f8f4c;
+        }
+
+        .risk-card .card-title {
+            color: white;
+        }
+
+        .risk-card .card-value {
+            font-size: 30px;
+        }
+
+        .forecast {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .forecast-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .forecast-box {
+            background: #f4f7f9;
+            padding: 15px;
+            border-radius: 9px;
+        }
+
+        .forecast-label {
+            font-size: 13px;
+            color: #64717d;
+            margin-bottom: 7px;
+        }
+
+        .forecast-value {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .warning {
+            margin-top: 15px;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .map-container {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .map-title {
+            font-size: 19px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        #map {
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+        }
+
+        .info {
+            margin-top: 15px;
+            background: #f4f7f9;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .legend {
+            background: white;
+            padding: 10px;
+            line-height: 22px;
+            border-radius: 8px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+        }
+
+        .dot {
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .red {
+            background: red;
+        }
+
+        .blue {
+            background: #1976d2;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 18px;
+            color: #64717d;
+            font-size: 13px;
+        }
+
+        @media (max-width: 900px) {
+
+            .cards,
+            .forecast-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .cards,
+            .forecast-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 21px;
+            }
+
+            #map {
+                height: 450px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+    <h1>Hyderabad Urban Flood Nowcast</h1>
+
+    <p>
+        Real-time rainfall monitoring and 3-hour-ahead
+        rainfall-based urban flood risk
+    </p>
+
+</div>
+
+
+<div class="container">
+
+
+    <!-- DATA STATUS -->
+
+    <div class="status">
+
+        Data status:
+        <span id="dataStatus">
+            Loading real rainfall and forecast data...
+        </span>
+
+    </div>
+
+
+    <!-- CURRENT DATA -->
+
+    <div class="cards">
+
+
+        <div class="card risk-card" id="riskCard">
+
+            <div class="card-title">
+                CURRENT RAINFALL RISK
+            </div>
+
+            <div class="card-value" id="riskLevel">
+                Loading...
+            </div>
+
+            <div>
+                Score:
+                <span id="riskScore">--</span>
+                / 100
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                24-HOUR RAINFALL
+            </div>
+
+            <div class="card-value">
+
+                <span id="rain24">--</span>
+                mm
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                3-DAY RAINFALL
+            </div>
+
+            <div class="card-value">
+
+                <span id="rain3">--</span>
+                mm
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-title">
+                7-DAY RAINFALL
+            </div>
+
+            <div class="card-value">
+
+                <span id="rain7">--</span>
+                mm
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- 3 HOUR FORECAST -->
+
+    <div class="forecast">
+
+        <div class="forecast-title">
+
+            3-HOUR-AHEAD FLOOD RISK
+
+        </div>
+
+
+        <div class="forecast-grid">
+
+
+            <div class="forecast-box">
+
+                <div class="forecast-label">
+                    Next 1 Hour
+                </div>
+
+                <div class="forecast-value">
+
+                    <span id="forecast1">
+                        --
+                    </span>
+
+                    mm
+
+                </div>
+
+            </div>
+
+
+            <div class="forecast-box">
+
+                <div class="forecast-label">
+                    Next 2 Hours
+                </div>
+
+                <div class="forecast-value">
+
+                    <span id="forecast2">
+                        --
+                    </span>
+
+                    mm
+
+                </div>
+
+            </div>
+
+
+            <div class="forecast-box">
+
+                <div class="forecast-label">
+                    Next 3 Hours
+                </div>
+
+                <div class="forecast-value">
+
+                    <span id="forecast3">
+                        --
+                    </span>
+
+                    mm
+
+                </div>
+
+            </div>
+
+
+            <div class="forecast-box">
+
+                <div class="forecast-label">
+                    3-Hour Risk
+                </div>
+
+                <div class="forecast-value"
+                     id="forecastRisk">
+
+                    --
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div
+            class="warning"
+            id="warningBox"
+        >
+            Waiting for forecast data...
+        </div>
+
+    </div>
+
+
+    <!-- MAP -->
+
+    <div class="map-container">
+
+        <div class="map-title">
+
+            Hyderabad Flood Risk Map
+
+        </div>
+
+        <div id="map"></div>
+
+
+        <div class="info">
+
+            <b>Map information</b>
+
+            <br><br>
+
+            🔴 Red points =
+            Official TGRAC/GHMC inundation/waterlogging locations.
+
+            <br><br>
+
+            🔵 Blue point =
+            Hyderabad rainfall monitoring point.
+
+            <br><br>
+
+            Red points represent known official locations.
+            They do <b>not</b> mean flooding is happening
+            there right now.
+
+            <br><br>
+
+            The 3-hour risk is a
+            <b>rainfall-based early-warning indicator</b>.
+            It is not a guarantee that flooding will occur.
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="footer">
+
+    Hyderabad Urban Flood Nowcast |
+    Real rainfall + hourly forecast |
+    OpenStreetMap + TGRAC/GHMC + Open-Meteo
+
+</div>
+
+
+<script>
+
+
+// ============================================================
+// HYDERABAD
+// ============================================================
+
+const LATITUDE = 17.3850;
+const LONGITUDE = 78.4867;
+
+
+// ============================================================
+// MAP
+// ============================================================
+
+const map = L.map("map").setView(
+    [LATITUDE, LONGITUDE],
+    12
+);
+
+
+L.tileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+        maxZoom: 19,
+        attribution:
+            "&copy; OpenStreetMap contributors"
+    }
+).addTo(map);
+
+
+// Hyderabad monitoring point
+
+const hyderabadMarker =
+    L.circleMarker(
+        [LATITUDE, LONGITUDE],
+        {
+            radius: 9,
+            color: "#0b4f8a",
+            fillColor: "#1976d2",
+            fillOpacity: 0.9,
+            weight: 3
+        }
+    ).addTo(map);
+
+
+hyderabadMarker.bindPopup(
+    "<b>Hyderabad Monitoring Point</b><br>" +
+    "Latitude: 17.3850<br>" +
+    "Longitude: 78.4867<br><br>" +
+    "Live rainfall monitoring location."
+);
+
+
+// ============================================================
+// OFFICIAL LOCATIONS
+// ============================================================
+
+const inundationLocations = [
+
+    ["BALKAMPET RUB", 17.448776054, 78.451292867],
+
+    ["NEAR APOLLO CRADLE HOSPITAL, ROAD NO 12",
+     17.416016345, 78.419640219],
+
+    ["NEAR TAPADIA DIAGNOSTIC CENTRE, CHIKKADPALLY",
+     17.407571075, 78.497114264],
+
+    ["FIZA HOTEL, BAHADURPURA X ROADS",
+     17.355292236, 78.454231245],
+
+    ["OPP BEGUM BAZAR POLICE STATION",
+     17.379778402, 78.475203575],
+
+    ["RETHIBOWLI JUNCTION",
+     17.395533015, 78.431077834],
+
+    ["NEAR GALAXY THEATRE, TOLICHOWKI",
+     17.402771021, 78.410735308],
+
+    ["LAKDIKAPUL",
+     17.404140093, 78.464495499],
+
+    ["BOMBAY HOTEL, RANIGUNJ",
+     17.432478447, 78.488477682],
+
+    ["MODEL HOUSE, PUNJAGUTTA",
+     17.424452310, 78.453587046],
+
+    ["LAKE VIEW GUEST HOUSE",
+     17.416228709, 78.460813639],
+
+    ["VILLA MARY COLLEGE, RAJBHAVAN ROAD",
+     17.421284709, 78.460300971],
+
+    ["KCP JUNCTION, KHAIRATHABAD",
+     17.417478603, 78.457065810],
+
+    ["NEERU'S SHOWROOM ROAD NO 36, BANJARA HILLS",
+     17.438652933, 78.399523474],
+
+    ["MINERVA HOTEL, HIMAYATHNAGAR",
+     17.401406896, 78.485483906],
+
+    ["OLIPHANT BRIDGE, CHILKALGUDA X ROADS",
+     17.433646622, 78.505944563],
+
+    ["NAMPALLY T JUNCTION",
+     17.392302073, 78.470026799],
+
+    ["OPP MEDIVISION EYE HOSPITAL, NMDC",
+     17.399061938, 78.447947609],
+
+    ["MOGHAL ENGINEERING COLLEGE, BANDLAGUDA",
+     17.314368804, 78.459953201],
+
+    ["MALAKPET GUNJ",
+     17.373301287, 78.504616846],
+
+    ["MALAKPET RUB",
+     17.377045666, 78.495137873],
+
+    ["CHILKALGUDA RUB",
+     17.434696622, 78.512466816],
+
+    ["SHAIKPET NALA",
+     17.406721560, 78.402841165]
+
+];
+
+
+inundationLocations.forEach(function(location) {
+
+    const marker =
+        L.circleMarker(
+            [location[1], location[2]],
+            {
+                radius: 7,
+                color: "#9b0000",
+                fillColor: "#ff0000",
+                fillOpacity: 0.85,
+                weight: 2
+            }
+        ).addTo(map);
+
+
+    marker.bindPopup(
+        "<b>Official Inundation / Waterlogging Location</b>" +
+        "<br><br>" +
+        location[0] +
+        "<br><br>" +
+        "<b>Source:</b> TGRAC / GHMC"
+    );
+
+});
+
+
+// ============================================================
+// LEGEND
+// ============================================================
+
+const legend = L.control({
+    position: "bottomright"
+});
+
+
+legend.onAdd = function() {
+
+    const div =
+        L.DomUtil.create(
+            "div",
+            "legend"
+        );
+
+
+    div.innerHTML =
+        "<b>Map Legend</b><br>" +
+        "<span class='dot red'></span>" +
+        "Official inundation location<br>" +
+        "<span class='dot blue'></span>" +
+        "Hyderabad monitoring point";
+
+
+    return div;
+
+};
+
+
+legend.addTo(map);
+
+
+// ============================================================
+// CURRENT RISK
+// ============================================================
+
+function calculateCurrentRisk(
+    rainfall24,
+    rainfall3,
+    rainfall7
+) {
+
+    const thresholds = [
+        [0, 95],
+        [0, 70],
+        [0, 100]
+    ];
+
+
+    const values = [
+        rainfall24,
+        rainfall3,
+        rainfall7
+    ];
+
+
+    let components = [];
+
+
+    for (
+        let i = 0;
+        i < values.length;
+        i++
+    ) {
+
+        let normalized =
+            values[i] /
+            thresholds[i][1];
+
+
+        normalized =
+            Math.max(
+                0,
+                Math.min(1, normalized)
+            );
+
+
+        components.push(
+            normalized
+        );
+
+    }
+
+
+    let score = (
+
+        0.50 * components[0] +
+        0.30 * components[1] +
+        0.20 * components[2]
+
+    ) * 100;
+
+
+    let level;
+
+
+    if (score < 25) {
+        level = "LOW";
+    }
+
+    else if (score < 50) {
+        level = "MODERATE";
+    }
+
+    else if (score < 75) {
+        level = "HIGH";
+    }
+
+    else {
+        level = "VERY HIGH";
+    }
+
+
+    return {
+        score: score,
+        level: level
+    };
+
+}
+
+
+// ============================================================
+// 3-HOUR RISK
+// ============================================================
+
+function calculateThreeHourRisk(
+    recent24,
+    forecast3
+) {
+
+    const combined =
+        recent24 + forecast3;
+
+
+    let score;
+
+
+    if (combined < 10) {
+
+        score =
+            (combined / 10) * 25;
+
+    }
+
+    else if (combined < 25) {
+
+        score =
+            25 +
+            ((combined - 10) / 15) * 25;
+
+    }
+
+    else if (combined < 50) {
+
+        score =
+            50 +
+            ((combined - 25) / 25) * 25;
+
+    }
+
+    else {
+
+        score =
+            75 +
+            Math.min(
+                25,
+                ((combined - 50) / 50) * 25
+            );
+
+    }
+
+
+    let level;
+
+
+    if (score < 25) {
+        level = "LOW";
+    }
+
+    else if (score < 50) {
+        level = "MODERATE";
+    }
+
+    else if (score < 75) {
+        level = "HIGH";
+    }
+
+    else {
+        level = "VERY HIGH";
+    }
+
+
+    return {
+        score: score,
+        level: level
+    };
+
+}
+
+
+// ============================================================
+// UPDATE RISK CARD
+// ============================================================
+
+function updateRiskCard(level) {
+
+    const card =
+        document.getElementById(
+            "riskCard"
+        );
+
+
+    if (level === "LOW") {
+
+        card.style.background =
+            "#1f8f4c";
+
+    }
+
+    else if (level === "MODERATE") {
+
+        card.style.background =
+            "#d49b00";
+
+    }
+
+    else if (level === "HIGH") {
+
+        card.style.background =
+            "#e36b00";
+
+    }
+
+    else {
+
+        card.style.background =
+            "#c62828";
+
+    }
+
+}
+
+
+// ============================================================
+// LOAD REAL DATA
+// ============================================================
+
+async function loadDashboardData() {
+
+    const status =
+        document.getElementById(
+            "dataStatus"
+        );
+
+
+    try {
+
+        status.textContent =
+            "Loading real rainfall and forecast data...";
+
+
+        const url =
+            "https://api.open-meteo.com/v1/forecast" +
+
+            "?latitude=" + LATITUDE +
+
+            "&longitude=" + LONGITUDE +
+
+            "&hourly=precipitation" +
+
+            "&past_days=7" +
+
+            "&forecast_hours=3" +
+
+            "&timezone=Asia%2FKolkata";
+
+
+        const response =
+            await fetch(url);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP " +
+                response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        const rainfall =
+            data.hourly.precipitation;
+
+
+        const times =
+            data.hourly.time;
+
+
+        // ====================================================
+        // RECENT 24 HOURS
+        // ====================================================
+
+        const recent24Values =
+            rainfall.slice(-27, -3);
+
+
+        const rainfall24 =
+            recent24Values.reduce(
+                (sum, value) =>
+                    sum + (value || 0),
+                0
+            );
+
+
+        // ====================================================
+        // 3-DAY
+        // ====================================================
+
+        const rainfall3 =
+            rainfall
+                .slice(-75, -3)
+                .reduce(
+                    (sum, value) =>
+                        sum + (value || 0),
+                    0
+                );
+
+
+        // ====================================================
+        // 7-DAY
+        // ====================================================
+
+        const rainfall7 =
+            rainfall
+                .slice(-171, -3)
+                .reduce(
+                    (sum, value) =>
+                        sum + (value || 0),
+                    0
+                );
+
+
+        // ====================================================
+        // NEXT 3 HOURS
+        // ====================================================
+
+        const forecastValues =
+            rainfall.slice(-3);
+
+
+        const forecast1 =
+            forecastValues[0] || 0;
+
+        const forecast2 =
+            forecastValues[1] || 0;
+
+        const forecast3 =
+            forecastValues[2] || 0;
+
+
+        const forecastTotal =
+            forecast1 +
+            forecast2 +
+            forecast3;
+
+
+        // ====================================================
+        // CURRENT RISK
+        // ====================================================
+
+        const currentRisk =
+            calculateCurrentRisk(
+                rainfall24,
+                rainfall3,
+                rainfall7
+            );
+
+
+        // ====================================================
+        // 3-HOUR RISK
+        // ====================================================
+
+        const threeHourRisk =
+            calculateThreeHourRisk(
+                rainfall24,
+                forecastTotal
+            );
+
+
+        // ====================================================
+        // UPDATE CURRENT CARDS
+        // ====================================================
+
+        document.getElementById(
+            "rain24"
+        ).textContent =
+            rainfall24.toFixed(2);
+
+
+        document.getElementById(
+            "rain3"
+        ).textContent =
+            rainfall3.toFixed(2);
+
+
+        document.getElementById(
+            "rain7"
+        ).textContent =
+            rainfall7.toFixed(2);
+
+
+        document.getElementById(
+            "riskScore"
+        ).textContent =
+            currentRisk.score.toFixed(2);
+
+
+        document.getElementById(
+            "riskLevel"
+        ).textContent =
+            currentRisk.level;
+
+
+        updateRiskCard(
+            currentRisk.level
+        );
+
+
+        // ====================================================
+        // UPDATE 3-HOUR FORECAST
+        // ====================================================
+
+        document.getElementById(
+            "forecast1"
+        ).textContent =
+            forecast1.toFixed(2);
+
+
+        document.getElementById(
+            "forecast2"
+        ).textContent =
+            forecast2.toFixed(2);
+
+
+        document.getElementById(
+            "forecast3"
+        ).textContent =
+            forecast3.toFixed(2);
+
+
+        document.getElementById(
+            "forecastRisk"
+        ).textContent =
+            threeHourRisk.level;
+
+
+        // ====================================================
+        // WARNING MESSAGE
+        // ====================================================
+
+        const warning =
+            document.getElementById(
+                "warningBox"
+            );
+
+
+        if (
+            threeHourRisk.level ===
+            "VERY HIGH"
+        ) {
+
+            warning.textContent =
+                "⚠ VERY HIGH: " +
+                "Rainfall-driven flood risk " +
+                "may increase within the next 3 hours.";
+
+            warning.style.background =
+                "#ffcdd2";
+
+            warning.style.color =
+                "#b71c1c";
+
+        }
+
+        else if (
+            threeHourRisk.level ===
+            "HIGH"
+        ) {
+
+            warning.textContent =
+                "⚠ HIGH: " +
+                "Rainfall-driven flood risk " +
+                "may increase within the next 3 hours.";
+
+            warning.style.background =
+                "#ffe0b2";
+
+            warning.style.color =
+                "#e65100";
+
+        }
+
+        else if (
+            threeHourRisk.level ===
+            "MODERATE"
+        ) {
+
+            warning.textContent =
+                "ℹ MODERATE: " +
+                "Continue monitoring rainfall conditions.";
+
+            warning.style.background =
+                "#fff3cd";
+
+            warning.style.color =
+                "#856404";
+
+        }
+
+        else {
+
+            warning.textContent =
+                "✓ LOW: " +
+                "No significant rainfall-driven " +
+                "risk is indicated for the next 3 hours.";
+
+            warning.style.background =
+                "#d4edda";
+
+            warning.style.color =
+                "#155724";
+
+        }
+
+
+        // ====================================================
+        // STATUS
+        // ====================================================
+
+        status.textContent =
+            "Real rainfall and forecast data loaded. " +
+            "Forecast time: " +
+            times[times.length - 3];
+
+    }
+
+
+    catch (error) {
+
+        console.error(error);
+
+
+        status.textContent =
+            "Unable to load rainfall data: " +
+            error.message;
+
+    }
+
+}
+
+
+// ============================================================
+// START
+// ============================================================
+
+loadDashboardData();
+
+
+// Refresh every 10 minutes
+
+setInterval(
+    loadDashboardData,
+    10 * 60 * 1000
+);
+
+
+</script>
+
+</body>
+
+</html>
